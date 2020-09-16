@@ -13,12 +13,28 @@ void Init_buffer_ext() {
 }
 
 VALUE buffer_from(VALUE klass, VALUE val) {
-  char* ptr = StringValueCStr(val);
-  VALUE obj = rb_funcall(Buffer, rb_intern("new"), 1, SIZET2NUM(strlen(ptr) + 1));
-  VALUE payload = rb_iv_get(obj, "@payload");
-  char* buf_ptr = buffer_payload_get(payload)->payload;
-  memcpy(buf_ptr, ptr, strlen(ptr) + 1);
-  return obj;
+  if (TYPE(val) == T_STRING) {
+    char* ptr = StringValueCStr(val);
+    VALUE obj = rb_funcall(Buffer, rb_intern("new"), 1, SIZET2NUM(strlen(ptr) + 1));
+    VALUE payload = rb_iv_get(obj, "@payload");
+    char* buf_ptr = buffer_payload_get(payload)->payload;
+    memcpy(buf_ptr, ptr, strlen(ptr) + 1);
+    return obj;
+  }
+
+  if (TYPE(val) == T_ARRAY) {
+    long len = RARRAY_LEN(val);
+    VALUE obj = rb_funcall(Buffer, rb_intern("new"), 1, LONG2NUM(len));
+    VALUE payload = rb_iv_get(obj, "@payload");
+    char* buf_ptr = buffer_payload_get(payload)->payload;
+    for (long i = 0; i < len; i++) {
+      VALUE num = rb_ary_entry(val, i);
+      buf_ptr[i] = NUM2CHR(num);
+    }
+    return obj;
+  }
+
+  return Qnil;
 }
 
 VALUE buffer_init(VALUE self, VALUE size) {
@@ -54,7 +70,7 @@ VALUE buffer_bytes(VALUE self) {
   struct buffer_payload* buffer = buffer_payload_get(payload);
   VALUE result = rb_ary_new2(buffer->buffer_size);
   for (size_t i = 0; i < buffer->buffer_size; i++) {
-    rb_ary_store(result, i, UINT2NUM(buffer->payload[i]));
+    rb_ary_store(result, i, CHR2FIX(buffer->payload[i])); // # TODO: Why there is no CHR2NUM?
   }
   return result;
 }
@@ -77,7 +93,7 @@ VALUE buffer_payload_realloc(VALUE wrapped, size_t size) {
   struct buffer_payload* ptr;
   TypedData_Get_Struct(wrapped, struct buffer_payload, &type_buffer_payload, ptr);
   ptr->buffer_size = size;
-  xrealloc(ptr->payload, size);
+  ptr->payload = xrealloc(ptr->payload, sizeof(char) * size);
   return wrapped;
 }
 
