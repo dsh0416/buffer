@@ -66,6 +66,12 @@ class BufferTest < Minitest::Test
     assert_equal 'おはよう世界！', buf.to_s.force_encoding('UTF-8')
   end
 
+  def test_that_not_nul_terminated_buffer_to_s
+    buf = Buffer.from [1, 1, 1, 1]
+    assert_equal 4, buf.size
+    assert_equal buf.to_s, "\x01\x01\x01\x01"
+  end
+
   def test_that_buffer_created_from_array
     buf = Buffer.from [1, 2, 3, 254]
     assert_equal 4, buf.size
