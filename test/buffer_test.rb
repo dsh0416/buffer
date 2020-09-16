@@ -45,6 +45,6 @@ class BufferTest < Minitest::Test
 
   def test_that_buffer_is_exposed
     buf = Buffer.new 1024
-    assert_equal Buffer::BufferPayload, buf.payload.class
+    assert_equal Buffer::BufferPayload, buf.data.class
   end
 end

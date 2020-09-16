@@ -16,8 +16,8 @@ VALUE method_buffer_from(VALUE klass, VALUE val) {
   if (TYPE(val) == T_STRING) {
     char* ptr = StringValueCStr(val);
     VALUE obj = rb_funcall(kBuffer, rb_intern("new"), 1, SIZET2NUM(strlen(ptr) + 1));
-    VALUE payload = rb_iv_get(obj, "@payload");
-    char* buf_ptr = internal_buffer_payload_get(payload)->payload;
+    VALUE data = rb_iv_get(obj, "@data");
+    char* buf_ptr = internal_buffer_data_get(data)->buffer;
     memcpy(buf_ptr, ptr, strlen(ptr) + 1);
     return obj;
   }
@@ -25,8 +25,8 @@ VALUE method_buffer_from(VALUE klass, VALUE val) {
   if (TYPE(val) == T_ARRAY) {
     long len = RARRAY_LEN(val);
     VALUE obj = rb_funcall(kBuffer, rb_intern("new"), 1, LONG2NUM(len));
-    VALUE payload = rb_iv_get(obj, "@payload");
-    char* buf_ptr = internal_buffer_payload_get(payload)->payload;
+    VALUE data = rb_iv_get(obj, "@data");
+    char* buf_ptr = internal_buffer_data_get(data)->buffer;
     for (long i = 0; i < len; i++) {
       VALUE num = rb_ary_entry(val, i);
       buf_ptr[i] = NUM2CHR(num);
@@ -38,78 +38,76 @@ VALUE method_buffer_from(VALUE klass, VALUE val) {
 }
 
 VALUE method_buffer_init(VALUE self, VALUE size) {
-  VALUE payload = internal_buffer_payload_malloc(NUM2SIZET(size));
-  rb_iv_set(self, "@payload", payload);
+  VALUE data = internal_buffer_data_malloc(NUM2SIZET(size));
+  rb_iv_set(self, "@data", data);
   return self;
 }
 
 VALUE method_buffer_clear(VALUE self) {
-  VALUE payload = rb_iv_get(self, "@payload");
-
-  struct buffer_payload* buffer = internal_buffer_payload_get(payload);
-
-  memset(buffer->payload, 0, buffer->buffer_size);
+  VALUE payload = rb_iv_get(self, "@data");
+  struct buffer_data* data = internal_buffer_data_get(payload);
+  memset(data->buffer, 0, data->buffer_size);
   return self;
 }
 
 VALUE method_buffer_resize(VALUE self, VALUE size) {
-  VALUE payload = rb_iv_get(self, "@payload");
-  internal_buffer_payload_realloc(payload, NUM2SIZET(size));
+  VALUE data = rb_iv_get(self, "@data");
+  internal_buffer_data_realloc(data, NUM2SIZET(size));
   return self;
 }
 
 VALUE method_buffer_to_s(VALUE self) {
   // FIXME: What if a buffer doesn't have a NUL terminator?
-  VALUE payload = rb_iv_get(self, "@payload");
+  VALUE data = rb_iv_get(self, "@data");
 
-  return rb_str_buf_new2(internal_buffer_payload_get(payload)->payload);
+  return rb_str_buf_new2(internal_buffer_data_get(data)->buffer);
 }
 
 VALUE method_buffer_bytes(VALUE self) {
-  VALUE payload = rb_iv_get(self, "@payload");
-  struct buffer_payload* buffer = internal_buffer_payload_get(payload);
+  VALUE data = rb_iv_get(self, "@data");
+  struct buffer_data* buffer = internal_buffer_data_get(data);
   VALUE result = rb_ary_new2(buffer->buffer_size);
   for (size_t i = 0; i < buffer->buffer_size; i++) {
-    rb_ary_store(result, i, CHR2FIX(buffer->payload[i])); // # TODO: Why there is no CHR2NUM?
+    rb_ary_store(result, i, CHR2FIX(buffer->buffer[i])); // # TODO: Why there is no CHR2NUM?
   }
   return result;
 }
 
 VALUE method_buffer_buffer_size(VALUE self) {
-  VALUE payload = rb_iv_get(self, "@payload");
+  VALUE data = rb_iv_get(self, "@data");
 
-  return SIZET2NUM(internal_buffer_payload_get(payload)->buffer_size);
+  return SIZET2NUM(internal_buffer_data_get(data)->buffer_size);
 }
 
 // internal methods
-VALUE internal_buffer_payload_malloc(size_t size) {
-  struct buffer_payload* payload = xmalloc(sizeof(struct buffer_payload));
-  payload->buffer_size = size;
-  payload->payload = xmalloc(sizeof(char) * size);
-  return TypedData_Wrap_Struct(kBufferPayload, &type_buffer_payload, payload);
+VALUE internal_buffer_data_malloc(size_t size) {
+  struct buffer_data* data = xmalloc(sizeof(struct buffer_data));
+  data->buffer_size = size;
+  data->buffer = xmalloc(sizeof(char) * size);
+  return TypedData_Wrap_Struct(kBufferPayload, &type_buffer_data, data);
 }
 
-VALUE internal_buffer_payload_realloc(VALUE wrapped, size_t size) {
-  struct buffer_payload* ptr;
-  TypedData_Get_Struct(wrapped, struct buffer_payload, &type_buffer_payload, ptr);
+VALUE internal_buffer_data_realloc(VALUE wrapped, size_t size) {
+  struct buffer_data* ptr;
+  TypedData_Get_Struct(wrapped, struct buffer_data, &type_buffer_data, ptr);
   ptr->buffer_size = size;
-  ptr->payload = xrealloc(ptr->payload, sizeof(char) * size);
+  ptr->buffer = xrealloc(ptr->buffer, sizeof(char) * size);
   return wrapped;
 }
 
-struct buffer_payload* internal_buffer_payload_get(VALUE wrapped) {
-  struct buffer_payload* ptr;
-  TypedData_Get_Struct(wrapped, struct buffer_payload, &type_buffer_payload, ptr);
+struct buffer_data* internal_buffer_data_get(VALUE wrapped) {
+  struct buffer_data* ptr;
+  TypedData_Get_Struct(wrapped, struct buffer_data, &type_buffer_data, ptr);
   return ptr;
 }
 
-void internal_buffer_payload_free(void* ptr) {
-  struct buffer_payload* t = (struct buffer_payload*) ptr;
-  xfree(t->payload);
+void internal_buffer_data_free(void* ptr) {
+  struct buffer_data* t = (struct buffer_data*) ptr;
+  xfree(t->buffer);
   xfree(t);
 }
 
-size_t internal_buffer_payload_size(const void* ptr) {
-  struct buffer_payload* t = (struct buffer_payload*) ptr;
-  return sizeof(struct buffer_payload) + t->buffer_size;
+size_t internal_buffer_data_size(const void* ptr) {
+  struct buffer_data* t = (struct buffer_data*) ptr;
+  return sizeof(struct buffer_data) + t->buffer_size;
 }

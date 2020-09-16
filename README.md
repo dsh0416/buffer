@@ -5,6 +5,10 @@ The gem to operate low level I/O data buffer
 
 ## Example
 
+```
+gem install 'data-buffer'
+```
+
 ```ruby
 require 'buffer'
 
@@ -19,12 +23,12 @@ buf.resize(2048) # realloc the buffer to 2048
 buf = Buffer.from('Hello World') # Create char* from existing string
 buf = Buffer.from([1, 2, 3, 244]) # Create char* from existing char array
 
-buf.payload # Get raw data struct
+buf.data # Get raw data struct
 
-# struct buffer_payload {
+# struct buffer_data {
 #   size_t buffer_size;
-#   char* payload;
+#   char* buffer;
 # };
 #
-# buffer_payload* payload = (buffer_payload*) ((struct RData *)obj)->data;
+# buffer_data* data = (buffer_data*) ((struct RData *)obj)->data;
 ```

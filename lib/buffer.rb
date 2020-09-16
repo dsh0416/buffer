@@ -1,5 +1,5 @@
 require 'buffer_ext'
 
 class Buffer
-  attr_reader :payload
+  attr_reader :data
 end
