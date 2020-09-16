@@ -5,6 +5,8 @@ void Init_buffer_ext() {
   kBufferPayload = rb_define_class_under(kBuffer, "BufferPayload", rb_cObject);
   rb_define_singleton_method(kBuffer, "from", method_buffer_from, 1);
   rb_define_method(kBuffer, "initialize", method_buffer_init, 1);
+  rb_define_method(kBuffer, "initialize_copy", method_buffer_init_copy, 1);
+  rb_define_method(kBuffer, "memset", method_buffer_memset, 2);
   rb_define_method(kBuffer, "clear", method_buffer_clear, 0);
   rb_define_method(kBuffer, "resize", method_buffer_resize, 1);
   rb_define_method(kBuffer, "to_s", method_buffer_to_s, 0);
@@ -43,11 +45,29 @@ VALUE method_buffer_init(VALUE self, VALUE size) {
   return self;
 }
 
+VALUE method_buffer_init_copy(VALUE self, VALUE orig) {
+  VALUE payload = rb_iv_get(orig, "@data");
+  struct buffer_data* data = internal_buffer_data_get(payload);
+
+  VALUE new_obj = internal_buffer_data_malloc(data->buffer_size);
+  struct buffer_data* new_data = internal_buffer_data_get(new_obj);
+
+  memcpy(new_data->buffer, data->buffer, data->buffer_size);
+  rb_iv_set(self, "@data", new_obj);
+  return self;
+}
+
+VALUE method_buffer_memset(VALUE self, VALUE ch, VALUE n) {
+  VALUE payload = rb_iv_get(self, "@data");
+  struct buffer_data* data = internal_buffer_data_get(payload);
+  memset(data->buffer, NUM2CHR(ch), NUM2SIZET(n));
+  return self;
+}
+
 VALUE method_buffer_clear(VALUE self) {
   VALUE payload = rb_iv_get(self, "@data");
   struct buffer_data* data = internal_buffer_data_get(payload);
-  memset(data->buffer, 0, data->buffer_size);
-  return self;
+  return method_buffer_memset(self, CHR2FIX(0), SIZET2NUM(data->buffer_size));
 }
 
 VALUE method_buffer_resize(VALUE self, VALUE size) {

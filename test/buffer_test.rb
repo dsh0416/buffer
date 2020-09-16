@@ -25,6 +25,35 @@ class BufferTest < Minitest::Test
     assert_equal [0] * 1024, buf.bytes
   end
 
+  def test_that_it_could_memset
+    buf = Buffer.new 1024
+    buf.clear
+    buf.memset(1, 24)
+    assert_equal [1] * 24 + [0] * 1000, buf.bytes
+  end
+
+  def test_that_it_could_be_cloned
+    buf = Buffer.new 1024
+    buf.clear
+    
+    buf2 = buf.clone
+    buf2.memset(1, 24)
+
+    assert_equal [0] * 1024, buf.bytes
+    assert_equal [1] * 24 + [0] * 1000, buf2.bytes
+  end
+
+  def test_that_it_could_be_dupped
+    buf = Buffer.new 1024
+    buf.clear
+    
+    buf2 = buf.dup
+    buf2.memset(1, 24)
+
+    assert_equal [0] * 1024, buf.bytes
+    assert_equal [1] * 24 + [0] * 1000, buf2.bytes
+  end
+
   def test_that_buffer_created_from_string
     buf = Buffer.from 'Hello World'
     assert_equal 12, buf.size
