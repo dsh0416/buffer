@@ -1,0 +1,24 @@
+PATH
+  remote: .
+  specs:
+    data-buffer (0.0.1)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    minitest (5.14.2)
+    rake (12.3.3)
+    rake-compiler (1.1.1)
+      rake
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  data-buffer!
+  minitest (~> 5.0)
+  rake (~> 12.0)
+  rake-compiler (~> 1.0)
+
+BUNDLED WITH
+   2.1.4
