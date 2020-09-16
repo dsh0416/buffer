@@ -15,7 +15,7 @@ require 'buffer'
 buf = Buffer.new(1024) # Create char* buffer with size of 1024
 buf.clear # memset 0 to buffer size
 buf.size # return buffer size
-buf.to_s # convert to string. WARNING: make sure the string has NUL terminator
+buf.to_s # convert to string.
 buf.bytes # convert to char byte array
 buf.memset(1, 4) # set first 4 bytes to 1
 

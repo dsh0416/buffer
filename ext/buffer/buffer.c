@@ -77,10 +77,23 @@ VALUE method_buffer_resize(VALUE self, VALUE size) {
 }
 
 VALUE method_buffer_to_s(VALUE self) {
-  // FIXME: What if a buffer doesn't have a NUL terminator?
-  VALUE data = rb_iv_get(self, "@data");
+  VALUE payload = rb_iv_get(self, "@data");
+  struct buffer_data* data = internal_buffer_data_get(payload);
 
-  return rb_str_buf_new2(internal_buffer_data_get(data)->buffer);
+  for (size_t i = 0; i < data->buffer_size; i++) {
+    if (data->buffer[i] == '\0') {
+      // zero terminated
+      return rb_str_buf_new2(data->buffer);
+    }
+  }
+
+  // Not zero terminated
+  char* tmp = xmalloc(sizeof(char) * (data->buffer_size + 1));
+  memcpy(tmp, data->buffer, data->buffer_size);
+  tmp[data->buffer_size] = '\0';
+  VALUE ret = rb_str_buf_new2(tmp);
+  xfree(tmp);
+  return ret;
 }
 
 VALUE method_buffer_bytes(VALUE self) {
