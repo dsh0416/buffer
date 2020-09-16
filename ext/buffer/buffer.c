@@ -79,21 +79,13 @@ VALUE method_buffer_resize(VALUE self, VALUE size) {
 VALUE method_buffer_to_s(VALUE self) {
   VALUE payload = rb_iv_get(self, "@data");
   struct buffer_data* data = internal_buffer_data_get(payload);
-
   for (size_t i = 0; i < data->buffer_size; i++) {
     if (data->buffer[i] == '\0') {
       // zero terminated
-      return rb_str_buf_new2(data->buffer);
+      return rb_str_new(data->buffer, i);
     }
   }
-
-  // Not zero terminated
-  char* tmp = xmalloc(sizeof(char) * (data->buffer_size + 1));
-  memcpy(tmp, data->buffer, data->buffer_size);
-  tmp[data->buffer_size] = '\0';
-  VALUE ret = rb_str_buf_new2(tmp);
-  xfree(tmp);
-  return ret;
+  return rb_str_new(data->buffer, data->buffer_size);
 }
 
 VALUE method_buffer_bytes(VALUE self) {
@@ -101,7 +93,7 @@ VALUE method_buffer_bytes(VALUE self) {
   struct buffer_data* buffer = internal_buffer_data_get(data);
   VALUE result = rb_ary_new2(buffer->buffer_size);
   for (size_t i = 0; i < buffer->buffer_size; i++) {
-    rb_ary_store(result, i, CHR2FIX(buffer->buffer[i])); // # TODO: Why there is no CHR2NUM?
+    rb_ary_store(result, i, CHR2FIX(buffer->buffer[i]));
   }
   return result;
 }
