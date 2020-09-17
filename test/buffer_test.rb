@@ -23,6 +23,7 @@ class BufferTest < Minitest::Test
     buf = Buffer.new 1024
     buf.clear
     assert_equal [0] * 1024, buf.bytes
+    assert_equal [0] * 1024, buf.to_a
   end
 
   def test_that_it_could_memset
