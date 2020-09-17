@@ -3,7 +3,9 @@
 void Init_buffer_ext() {
   kBuffer = rb_define_class("Buffer", rb_cObject);
   kBufferPayload = rb_define_class_under(kBuffer, "BufferPayload", rb_cObject);
+
   rb_define_singleton_method(kBuffer, "from", method_buffer_from, 1);
+
   rb_define_method(kBuffer, "initialize", method_buffer_init, 1);
   rb_define_method(kBuffer, "initialize_copy", method_buffer_init_copy, 1);
   rb_define_method(kBuffer, "memset", method_buffer_memset, 2);
@@ -12,6 +14,8 @@ void Init_buffer_ext() {
   rb_define_method(kBuffer, "to_s", method_buffer_to_s, 0);
   rb_define_method(kBuffer, "bytes", method_buffer_bytes, 0);
   rb_define_method(kBuffer, "size", method_buffer_buffer_size, 0);
+
+  rb_define_private_method(kBuffer, "internal_memcmp", method_buffer_memcmp, 2);
 }
 
 VALUE method_buffer_from(VALUE klass, VALUE val) {
@@ -135,4 +139,19 @@ void internal_buffer_data_free(void* ptr) {
 size_t internal_buffer_data_size(const void* ptr) {
   struct buffer_data* t = (struct buffer_data*) ptr;
   return sizeof(struct buffer_data) + t->buffer_size;
+}
+
+VALUE method_buffer_memcmp(VALUE self, VALUE other, VALUE num) {
+  VALUE payload_a = rb_iv_get(self, "@data");
+  struct buffer_data* data_a = internal_buffer_data_get(payload_a);
+
+  VALUE payload_b = rb_iv_get(other, "@data");
+  struct buffer_data* data_b = internal_buffer_data_get(payload_b);
+
+  size_t n = NUM2SIZET(num);
+  if (n > min(data_a->buffer_size, data_b->buffer_size)) {
+    rb_raise(rb_eRangeError, "The comparison reaches the boundary of buffer.");
+  }
+
+  return INT2NUM(memcmp(data_a->buffer, data_b->buffer, n));
 }

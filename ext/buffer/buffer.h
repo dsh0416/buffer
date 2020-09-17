@@ -1,5 +1,8 @@
 #include <ruby.h>
 
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+
 VALUE kBuffer = Qnil;
 VALUE kBufferPayload = Qnil;
 
@@ -14,6 +17,7 @@ VALUE method_buffer_resize(VALUE self, VALUE size);
 VALUE method_buffer_to_s(VALUE self);
 VALUE method_buffer_bytes(VALUE self);
 VALUE method_buffer_buffer_size(VALUE self);
+VALUE method_buffer_memcmp(VALUE self, VALUE other, VALUE num);
 
 // internal methods
 VALUE internal_buffer_data_malloc(size_t size);

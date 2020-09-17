@@ -40,6 +40,7 @@ class BufferTest < Minitest::Test
     buf2 = buf.clone
     buf2.memset(1, 24)
 
+    refute_equal buf, buf2
     assert_equal [0] * 1024, buf.bytes
     assert_equal [1] * 24 + [0] * 1000, buf2.bytes
   end
@@ -51,6 +52,7 @@ class BufferTest < Minitest::Test
     buf2 = buf.dup
     buf2.memset(1, 24)
 
+    refute_equal buf, buf2
     assert_equal [0] * 1024, buf.bytes
     assert_equal [1] * 24 + [0] * 1000, buf2.bytes
   end
@@ -82,5 +84,22 @@ class BufferTest < Minitest::Test
   def test_that_buffer_is_exposed
     buf = Buffer.new 1024
     assert_equal Buffer::BufferPayload, buf.data.class
+  end
+
+  def test_that_buffer_could_be_compared
+    buf = Buffer.from [1, 1, 1, 0]
+    buf2 = Buffer.from [1, 1, 1, 0, 0]
+    refute_equal buf, buf2
+    assert_equal 0, buf.memcmp(buf2)
+    assert_equal 0, buf <=> buf2
+    assert_equal 0, buf.memcmp(buf2, 4)
+  end
+
+  def test_that_buffer_comparison_checks_bounds
+    buf = Buffer.from [1, 1, 1, 0]
+    buf2 = Buffer.from [1, 1, 1, 0, 0]
+    assert_raises RangeError do
+      buf.memcmp(buf2, 5)
+    end
   end
 end

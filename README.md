@@ -36,4 +36,8 @@ buf.data # Get raw data struct
 # Both `clone` and `dup` could copy the buffer
 buf2 = buf.clone
 buf3 = buf.dup
+
+buf2.memcmp(buf3) # compare the common parts
+buf2.memcmp(buf3, 2) # compare the first 2 bytes
+buf2 <=> buf3 # alias of memcmp
 ```
